@@ -1,0 +1,579 @@
+{% load static %}
+{% load i18n %}
+{% load basket_tags %}
+{% load category_tags %}
+
+<style>
+/* Reset any conflicting styles */
+.navbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100vw !important;
+    max-width: 100vw !important;
+    z-index: 1030 !important;
+}
+
+.navbar .container-fluid {
+    max-width: 100vw !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+.navbar-brand .brand-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ff8c00 !important;
+    text-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    color: #ffffff !important;
+    transition: all 0.3s ease;
+    position: relative;
+    white-space: nowrap;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.375rem;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    background: linear-gradient(135deg, #ff8c00, #ff6b00) !important;
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4);
+}
+
+/* Dropdown Hover Functionality */
+.dropdown:hover .dropdown-menu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin-top: 0.125rem !important;
+}
+
+.dropdown-menu {
+    background: rgba(26, 26, 26, 0.95) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 1040 !important;
+    position: absolute !important;
+    min-width: 200px;
+    margin-top: 0.125rem;
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.dropdown-menu.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.dropdown-item {
+    color: #ffffff !important;
+    transition: all 0.3s ease;
+    padding: 0.7rem 1rem;
+    border-radius: 5px;
+    margin: 2px 5px;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: linear-gradient(135deg, #ff8c00, #ff6b00) !important;
+    color: #ffffff !important;
+    transform: translateX(5px);
+}
+
+.btn-outline-light {
+    border: 2px solid #ffffff !important;
+    color: #ffffff !important;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ff8c00, #ff6b00) !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #ff6b00, #ff4500) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4);
+}
+
+.navbar-toggler {
+    border: 2px solid #ffffff !important;
+    padding: 0.25rem 0.5rem;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 140, 0, 0.25) !important;
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ff8c00, #ff6b00) !important;
+    color: #ffffff !important;
+}
+
+/* Cart Button Fixes */
+.cart-trigger {
+    color: #ffffff !important;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+    border: none !important;
+    background: none !important;
+    padding: 0.5rem 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    cursor: pointer !important;
+}
+
+.cart-trigger:hover {
+    color: #ff8c00 !important;
+    transform: translateY(-1px);
+}
+
+.cart-trigger .badge {
+    background: #ff8c00 !important;
+    color: white !important;
+    font-size: 0.7em;
+}
+
+/* User dropdown fixes */
+.nav-item .nav-link {
+    color: #ffffff !important;
+}
+
+.nav-item .nav-link:hover {
+    color: #ff8c00 !important;
+}
+
+/* Theme toggle button */
+#theme-toggle {
+    color: #ffffff !important;
+    border: none !important;
+    background: none !important;
+    padding: 0.5rem !important;
+}
+
+#theme-toggle:hover {
+    color: #ff8c00 !important;
+}
+
+/* Cart Sidebar Styles */
+.cart-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    right: -100% !important;
+    width: min(400px, 90vw) !important;
+    max-width: 90vw !important;
+    height: 100vh;
+    background: white;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    transition: right 0.3s ease;
+    z-index: 9999 !important;
+    overflow-y: auto;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    transform: translateX(100%) !important;
+}
+
+.cart-sidebar.open {
+    right: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: translateX(0) !important;
+}
+
+.cart-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.cart-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+.cart-header {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-cart {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+}
+
+.close-cart:hover {
+    color: #000;
+}
+
+/* Mobile Responsive */
+@media (max-width: 991.98px) {
+    .navbar-nav .nav-link {
+        margin: 0.2rem 0;
+        text-align: center;
+    }
+
+    .navbar-collapse {
+        background: rgba(26, 26, 26, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        margin-top: 1rem;
+        padding: 1rem;
+        max-width: 100% !important;
+        z-index: 1035 !important;
+    }
+
+    .cart-sidebar {
+        width: 100vw !important;
+        max-width: 100vw !important;
+    }
+
+    /* Disable hover on mobile, use click only */
+    .dropdown:hover .dropdown-menu {
+        display: none !important;
+    }
+
+    .dropdown-menu {
+        position: static !important;
+        float: none;
+        width: auto;
+        margin-top: 0;
+        background-color: rgba(26, 26, 26, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Dark mode compatibility */
+[data-bs-theme="dark"] .cart-sidebar {
+    background: #343a40 !important;
+    color: #fff;
+}
+
+[data-bs-theme="dark"] .cart-header {
+    border-bottom-color: #495057;
+}
+
+/* Prevent body scroll when sidebar is open */
+body.cart-open {
+    overflow: hidden;
+}
+
+/* Add padding to body to account for fixed navbar */
+body {
+    padding-top: 70px; /* Adjust this value based on your navbar height */
+}
+
+/* Ensure dropdowns appear above everything */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    z-index: 1050 !important;
+}
+</style>
+
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-lg">
+    <div class="container-fluid">
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'core:home' %}">
+            <img src="{% static 'images/logo.png' %}" alt="Leema Logo" style="height: 35px;" class="me-2">
+            <span class="brand-text">LEEMA</span>
+        </a>
+
+    <!-- Mobile Toggler -->
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Navbar Collapse -->
+    <div class="collapse navbar-collapse" id="mainNav">
+        <!-- Main Nav Links -->
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+                <a class="nav-link active px-3 py-2 rounded-pill mx-1" aria-current="page" href="{% url 'core:home' %}">HOME</a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link px-3 py-2 rounded-pill mx-1" href="{% url 'catalogue:index' %}">MODELS</a>
+            </li>
+
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle px-3 py-2 rounded-pill mx-1" href="#" id="aboutDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    ABOUT
+                </a>
+                <ul class="dropdown-menu dropdown-menu-dark animated-dropdown" aria-labelledby="aboutDropdown">
+                    <li><a class="dropdown-item" href="#">Smart Watch</a></li>
+                    <li><a class="dropdown-item" href="#">Blog</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">About Us</a></li>
+                </ul>
+            </li>
+
+            {% category_tree as categories %}
+            {% if categories %}
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle px-3 py-2 rounded-pill mx-1" href="#" id="accessoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    CATEGORIES
+                </a>
+                <ul class="dropdown-menu dropdown-menu-dark animated-dropdown" aria-labelledby="accessoriesDropdown">
+                    {% for category in categories %}
+                        <li><a class="dropdown-item" href="{{ category.get_absolute_url }}">{{ category.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% endif %}
+
+            <li class="nav-item">
+                <a class="nav-link px-3 py-2 rounded-pill mx-1" href="#">PRICE</a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link px-3 py-2 rounded-pill mx-1" href="#">BLOG</a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link px-3 py-2 rounded-pill mx-1" href="{% url 'core:contact' %}">CONTACT</a>
+            </li>
+        </ul>
+
+        <!-- Right-side actions -->
+        <div class="d-flex align-items-center">
+            <!-- User Authentication -->
+            {% if user.is_authenticated %}
+                <div class="nav-item dropdown me-3">
+                    <a href="#" class="nav-link dropdown-toggle d-flex align-items-center text-white" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle fs-5 me-2"></i>
+                        <span class="d-none d-md-inline">{{ user.get_full_name|default:user.email }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark animated-dropdown" aria-labelledby="accountDropdown">
+                        {% if user.is_staff %}
+                            <li><a class="dropdown-item" href="{% url 'dashboard:index' %}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{% url 'customer:profile-view' %}"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'customer:order-list' %}"><i class="bi bi-bag me-2"></i>My Orders</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'customer:logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            {% else %}
+                <a href="{% url 'customer:login' %}" class="btn btn-outline-light me-2 px-3">Login</a>
+                <a href="{% url 'customer:register' %}" class="btn btn-warning px-3">Register</a>
+            {% endif %}
+
+            <!-- Action Icons -->
+            <div class="d-flex align-items-center ms-3">
+                <a href="{% url 'customer:wishlists-list' %}" class="nav-link mx-2 text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Wishlist">
+                    <i class="bi bi-heart fs-5"></i>
+                </a>
+
+                <!-- Cart Button -->
+                <div id="navbar-cart-indicator">
+                    {% if request.basket.num_items > 0 %}
+                        <button type="button" class="cart-trigger nav-link mx-2" data-action="open-cart">
+                            <i class="bi bi-cart3 fs-5"></i>
+                            <span class="badge bg-warning">{{ request.basket.num_items }}</span>
+                        </button>
+                    {% else %}
+                        <button type="button" class="cart-trigger nav-link mx-2" data-action="open-cart">
+                            <i class="bi bi-cart3 fs-5"></i>
+                        </button>
+                    {% endif %}
+                </div>
+
+                <!-- Dark/Light Mode Toggle -->
+                <button id="theme-toggle" class="btn btn-link nav-link mx-2 text-white" type="button" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Theme">
+                    <i class="bi bi-sun-fill" id="theme-icon-sun"></i>
+                    <i class="bi bi-moon-stars-fill d-none" id="theme-icon-moon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Cart Sidebar -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCartSidebar()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+        <h3>{% trans "Your Cart" %}</h3>
+        <button class="close-cart" onclick="closeCartSidebar()">&times;</button>
+    </div>
+    <div id="cart-content">
+        {% if request.basket.num_items > 0 %}
+            {% include 'oscar/basket/partials/basket_content_sidebar.html' %}
+        {% else %}
+            <div class="empty-cart text-center py-5">
+                <i class="bi bi-cart3 fs-1 text-muted mb-3"></i>
+                <p>{% trans "Your basket is empty." %}</p>
+                <button class="btn btn-primary" onclick="closeCartSidebar()">
+                    {% trans "Continue shopping" %}
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap dropdowns
+    var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+    var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+        return new bootstrap.Dropdown(dropdownToggleEl, {
+            boundary: 'viewport'
+        });
+    });
+
+    // Enhanced dropdown hover functionality for desktop
+    if (window.innerWidth >= 992) {
+        document.querySelectorAll('.dropdown').forEach(function(dropdown) {
+            var timeoutId;
+
+            dropdown.addEventListener('mouseenter', function() {
+                clearTimeout(timeoutId);
+                var dropdownMenu = this.querySelector('.dropdown-menu');
+                var dropdownToggle = this.querySelector('.dropdown-toggle');
+
+                if (dropdownMenu && dropdownToggle) {
+                    dropdownMenu.classList.add('show');
+                    dropdownToggle.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            dropdown.addEventListener('mouseleave', function() {
+                var self = this;
+                timeoutId = setTimeout(function() {
+                    var dropdownMenu = self.querySelector('.dropdown-menu');
+                    var dropdownToggle = self.querySelector('.dropdown-toggle');
+
+                    if (dropdownMenu && dropdownToggle) {
+                        dropdownMenu.classList.remove('show');
+                        dropdownToggle.setAttribute('aria-expanded', 'false');
+                    }
+                }, 100); // Small delay to prevent flickering
+            });
+        });
+    }
+
+    // Handle cart trigger clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-action="open-cart"]')) {
+            e.preventDefault();
+            e.stopPropagation();
+            openCartSidebar();
+        }
+    });
+
+    // Close dropdown when clicking outside (for click functionality)
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown')) {
+            var dropdowns = document.querySelectorAll('.dropdown-menu.show');
+            dropdowns.forEach(function(dropdown) {
+                dropdown.classList.remove('show');
+                var toggle = dropdown.previousElementSibling;
+                if (toggle && toggle.classList.contains('dropdown-toggle')) {
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+    });
+});
+
+// Handle window resize to adjust dropdown behavior
+window.addEventListener('resize', function() {
+    // Refresh dropdown behavior on window resize
+    if (window.innerWidth < 992) {
+        // Mobile: Remove hover effects
+        document.querySelectorAll('.dropdown-menu.show').forEach(function(dropdown) {
+            if (!dropdown.closest('.dropdown').querySelector('.dropdown-toggle').getAttribute('aria-expanded')) {
+                dropdown.classList.remove('show');
+            }
+        });
+    }
+});
+
+function openCartSidebar() {
+    document.getElementById('cartSidebar').classList.add('open');
+    document.getElementById('cartOverlay').classList.add('active');
+    document.body.classList.add('cart-open');
+    loadCartContent();
+}
+
+function closeCartSidebar() {
+    document.getElementById('cartSidebar').classList.remove('open');
+    document.getElementById('cartOverlay').classList.remove('active');
+    document.body.classList.remove('cart-open');
+}
+
+function loadCartContent() {
+    fetch('{% url "basket:summary" %}')
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Update sidebar content by finding the new content in the fetched HTML
+            const newSidebarContent = doc.querySelector('#cart-content');
+            const mainSidebar = document.getElementById('cart-content');
+            if (newSidebarContent && mainSidebar) {
+                mainSidebar.innerHTML = newSidebarContent.innerHTML;
+            }
+
+            // Update navbar cart indicator by finding it in the fetched HTML
+            const newNavbarIndicator = doc.getElementById('navbar-cart-indicator');
+            const mainNavbarIndicator = document.getElementById('navbar-cart-indicator');
+            if (newNavbarIndicator && mainNavbarIndicator) {
+                mainNavbarIndicator.innerHTML = newNavbarIndicator.innerHTML;
+            }
+        })
+        .catch(error => console.error('Error loading cart:', error));
+}
+</script>

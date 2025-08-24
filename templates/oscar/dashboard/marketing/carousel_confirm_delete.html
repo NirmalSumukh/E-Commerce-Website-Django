@@ -1,0 +1,43 @@
+{% extends 'oscar/dashboard/layout.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Delete Slide" %} | {% trans "Carousel Management" %} | {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}">{% trans "Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'marketing:manage_carousel' %}">{% trans "Carousel Management" %}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans "Delete Slide" %}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block header %}
+    <div class="page-header">
+        <h1>{% trans "Delete Slide?" %}</h1>
+    </div>
+{% endblock header %}
+
+{% block dashboard_content %}
+    <div class="card card-body">
+        <p>{% blocktrans with caption=object.caption_header|default:'Untitled Slide' %}Are you sure you want to delete the slide titled "<strong>{{ caption }}</strong>"?{% endblocktrans %}</p>
+        
+        {% if object.image %}
+        <div class="my-3">
+            <img src="{{ object.image.url }}" alt="{{ object.caption_header }}" class="img-fluid rounded" style="max-height: 200px;">
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <p class="text-danger">{% trans "This action cannot be undone." %}</p>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">{% trans "Delete" %}</button>
+                <a href="{% url 'marketing:manage_carousel' %}" class="btn btn-secondary">{% trans "Cancel" %}</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

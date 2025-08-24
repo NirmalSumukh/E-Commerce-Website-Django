@@ -1,0 +1,57 @@
+{% extends "oscar/layout.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% trans 'Login or register' %} | {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ homepage_url }}">{% trans 'Home' %}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans 'Login or register' %}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block headertext %}{% trans "Login or Register" %}{% endblock %}
+
+{% block content %}
+    <div class="row g-4">
+        {# Login Form Column #}
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <h2 class="card-title h3 mb-4">{% trans 'Log In' %}</h2>
+                    <form id="login_form" action="{% url 'customer:login' %}" method="post">
+                        {% csrf_token %}
+                        {{ login_form|crispy }}
+                        <div class="d-grid gap-2">
+                            <button name="login_submit" type="submit" value="Log In" class="btn btn-primary btn-lg" data-loading-text="{% trans "Logging in..." %}">{% trans 'Log In' %}</button>
+                        </div>
+                        <p class="mt-3 text-center"><a href="{% url 'password-reset' %}">{% trans "I've forgotten my password" %}</a></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {# Registration Form Column #}
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <h2 class="card-title h3 mb-4">{% trans 'Register' %}</h2>
+                    <form id="register_form" action="{% url 'customer:register' %}" method="post">
+                        {% csrf_token %}
+                        {{ registration_form|crispy }}
+                        <div class="d-grid gap-2 mt-3">
+                            <button name="registration_submit" type="submit" value="Register" class="btn btn-success btn-lg" data-loading-text="{% trans 'Registering...' %}">{% trans 'Register' %}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

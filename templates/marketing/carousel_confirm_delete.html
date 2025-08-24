@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Deletion{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Confirm Deletion</h2>
+                    <p class="text-center">Are you sure you want to delete the slide titled "<strong>{{ object.caption_header|default:'Untitled Slide' }}</strong>"?</p>
+                    
+                    {% if object.image %}
+                    <div class="text-center my-3">
+                        <img src="{{ object.image.url }}" alt="{{ object.caption_header }}" class="img-fluid rounded" style="max-height: 200px;">
+                    </div>
+                    {% endif %}
+
+                    <p class="text-center text-danger">This action cannot be undone.</p>
+
+                    <form method="post" class="text-center mt-4">
+                        {% csrf_token %}
+                        <a href="{% url 'marketing:manage_carousel' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

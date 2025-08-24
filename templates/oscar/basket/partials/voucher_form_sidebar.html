@@ -1,0 +1,330 @@
+{% load i18n %}
+{% load widget_tweaks %}
+{% load currency_filters %}
+
+<style>
+.sidebar-voucher-form {
+    margin-top: 15px;
+}
+
+.voucher-input-group {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.voucher-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.voucher-input:focus {
+    outline: none;
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.1);
+}
+
+.apply-voucher-btn {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.apply-voucher-btn:hover {
+    background: #555;
+}
+
+.apply-voucher-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.voucher-messages {
+    margin-top: 10px;
+}
+
+.voucher-success {
+    color: #28a745;
+    font-size: 12px;
+    padding: 5px 0;
+}
+
+.voucher-error {
+    color: #dc3545;
+    font-size: 12px;
+    padding: 5px 0;
+}
+
+.applied-vouchers {
+    margin-top: 10px;
+}
+
+.applied-voucher-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.voucher-code {
+    font-weight: 600;
+    color: #333;
+}
+
+.voucher-discount {
+    color: #28a745;
+    font-size: 12px;
+}
+
+.remove-voucher {
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 12px;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.remove-voucher:hover {
+    color: #c82333;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 2px solid #333;
+    animation: spin 1s linear infinite;
+    margin-right: 5px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<div class="sidebar-voucher-form">
+    <!-- Voucher Application Form -->
+    <form method="post" action="{% url 'basket:vouchers-add' %}" id="voucher_form">
+        {% csrf_token %}
+        <div class="voucher-input-group">
+            <input type="text" 
+                   name="code" 
+                   id="id_code"
+                   class="voucher-input" 
+                   placeholder="{% trans 'Enter coupon code' %}"
+                   autocomplete="off"
+                   maxlength="128">
+            <button type="submit" class="apply-voucher-btn" id="apply-btn">
+                <span class="btn-text">{% trans "Apply" %}</span>
+                <span class="loading-spinner" id="loading-spinner" style="display: none;"></span>
+            </button>
+        </div>
+    </form>
+
+    <!-- Messages Area -->
+    <div class="voucher-messages" id="voucher-messages">
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    <div class="voucher-success">
+                        <i class="fas fa-check-circle"></i> {{ message }}
+                    </div>
+                {% elif message.tags == 'error' %}
+                    <div class="voucher-error">
+                        <i class="fas fa-exclamation-circle"></i> {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Applied Vouchers Display -->
+    {% if basket.vouchers.exists %}
+        <div class="applied-vouchers">
+            {% for voucher in basket.vouchers.all %}
+                <div class="applied-voucher-item">
+                    <div>
+                        <div class="voucher-code">
+                            <i class="fas fa-tag"></i> {{ voucher.code }}
+                        </div>
+                        <div class="voucher-discount">
+                            {% if voucher.discount %}
+                                -{{ voucher.discount|currency:basket.currency }}
+                            {% else %}
+                                {% trans "Discount applied" %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <button type="button"
+                        class="remove-voucher"
+                        onclick="removeVoucher('{% url "basket:vouchers-remove" pk=voucher.id %}')">
+                        <i class="fas fa-times"></i>
+                    </button>       
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const voucherForm = document.getElementById('voucher_form');
+    const applyBtn = document.getElementById('apply-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const btnText = document.querySelector('.btn-text');
+    const messagesDiv = document.getElementById('voucher-messages');
+
+    if (voucherForm) {
+        voucherForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(voucherForm);
+            const code = formData.get('code');
+            
+            if (!code || code.trim() === '') {
+                showMessage('{% trans "Please enter a coupon code" %}', 'error');
+                return;
+            }
+
+            // Show loading state
+            showLoadingState(true);
+            
+            fetch(voucherForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                return response.json().catch(() => {
+                    // If not JSON, treat as success and reload
+                    if (response.ok) {
+                        loadCartContent();
+                        clearMessages();
+                        showMessage('{% trans "Coupon applied successfully!" %}', 'success');
+                        voucherForm.reset();
+                    }
+                    throw new Error('Invalid response format');
+                });
+            })
+            .then(data => {
+                if (data.success) {
+                    loadCartContent();
+                    clearMessages();
+                    showMessage(data.message || '{% trans "Coupon applied successfully!" %}', 'success');
+                    voucherForm.reset();
+                } else {
+                    showMessage(data.message || '{% trans "Invalid coupon code" %}', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error applying voucher:', error);
+                showMessage('{% trans "Error applying coupon. Please try again." %}', 'error');
+            })
+            .finally(() => {
+                showLoadingState(false);
+            });
+        });
+    }
+
+    function showLoadingState(isLoading) {
+        if (isLoading) {
+            applyBtn.disabled = true;
+            btnText.style.display = 'none';
+            loadingSpinner.style.display = 'inline-block';
+        } else {
+            applyBtn.disabled = false;
+            btnText.style.display = 'inline';
+            loadingSpinner.style.display = 'none';
+        }
+    }
+
+    function showMessage(message, type) {
+        clearMessages();
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `voucher-${type}`;
+        
+        const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+        messageDiv.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+        
+        messagesDiv.appendChild(messageDiv);
+        
+        // Auto-hide success messages after 3 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+    }
+
+    function clearMessages() {
+        messagesDiv.innerHTML = '';
+    }
+});
+
+function removeVoucher(removeUrl) {
+    if (!confirm('{% trans "Are you sure you want to remove this coupon?" %}')) {
+        return;
+    }
+
+    fetch(removeUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+        // The request body is not needed, as the voucher's ID is in the URL
+    })
+    .then(response => {
+        if (response.ok) {
+            // Assuming you have a function that reloads the cart content via AJAX
+            loadCartContent();
+            showMessage('{% trans "Coupon removed successfully!" %}', 'success');
+        } else {
+            showMessage('{% trans "Error removing coupon. Please try again." %}', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error removing voucher:', error);
+        showMessage('{% trans "Error removing coupon. Please try again." %}', 'error');
+    });
+}
+
+// Helper function to show messages (needs to be global for removeVoucher)
+function showMessage(message, type) {
+    const messagesDiv = document.getElementById('voucher-messages');
+    messagesDiv.innerHTML = '';
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `voucher-${type}`;
+    
+    const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+    messageDiv.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+    
+    messagesDiv.appendChild(messageDiv);
+    
+    // Auto-hide success messages after 3 seconds
+    if (type === 'success') {
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 3000);
+    }
+}
+</script>

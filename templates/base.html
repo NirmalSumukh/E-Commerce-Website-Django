@@ -1,0 +1,279 @@
+{% load static %}
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}Your premier destination for Smart TVs, Smart Watches, and Accessories{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}smart tv, smart watch, accessories, electronics, e-commerce{% endblock %}">
+    <meta name="author" content="{% block meta_author %}Your Company Name{% endblock %}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{{ page_title|default:'Home' }} - Your E-commerce Store{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ page_description|default:'Your premier destination for Smart TVs, Smart Watches, and Accessories' }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'images/logo.png' %}{% endblock %}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{% block twitter_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="twitter:title" content="{% block twitter_title %}{{ page_title|default:'Home' }} - Your E-commerce Store{% endblock %}">
+    <meta property="twitter:description" content="{% block twitter_description %}{{ page_description|default:'Your premier destination for Smart TVs, Smart Watches, and Accessories' }}{% endblock %}">
+    <meta property="twitter:image" content="{% block twitter_image %}{% static 'images/logo.png' %}{% endblock %}">
+
+    <title>{% block title %}Home{% endblock %} - Your E-commerce Store</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/icons/favicon.ico' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/icons/apple-touch-icon.png' %}">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}">
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    {% block structured_data %}{% endblock %}
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="visually-hidden-focusable btn btn-primary position-absolute top-0 start-0 m-3" style="z-index: 9999;">
+        Skip to main content
+    </a>
+
+    <!-- Navigation -->
+    {% include 'includes/navbar.html' %}
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="d-none">
+        <div class="spinner-overlay">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="main-content" class="{% block main_classes %}{% endblock %}">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="container-fluid">
+                {% include 'includes/messages.html' %}
+            </div>
+        {% endif %}
+
+        <!-- Breadcrumbs -->
+        {% block breadcrumbs %}
+            {% if request.resolver_match.url_name != 'home' %}
+                <nav aria-label="breadcrumb" class="container-fluid mt-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'core:home' %}" class="text-decoration-none">
+                                <i class="bi bi-house-door"></i> Home
+                            </a>
+                        </li>
+                        {% block breadcrumb_items %}{% endblock %}
+                    </ol>
+                </nav>
+            {% endif %}
+        {% endblock %}
+
+        <!-- Hero Section (Only on homepage) -->
+        {% block hero %}{% endblock %}
+
+        <!-- Carousel Section -->
+        {% block carousel %}
+            {% if request.resolver_match.url_name == 'home' %}
+                {% include 'includes/carousel.html' %}
+            {% endif %}
+        {% endblock %}
+
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+
+        <!-- Newsletter Signup -->
+        {% block newsletter %}
+            {% if request.resolver_match.url_name == 'home' %}
+                <section class="newsletter-section bg-primary text-white py-5 mt-5">
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-8 text-center">
+                                <h3 class="h4 mb-3">Stay Updated with Latest Offers</h3>
+                                <p class="mb-4">Get exclusive deals and new product notifications delivered to your inbox.</p>
+                                <form class="d-flex justify-content-center" method="post" action="{% url 'core:newsletter_signup' %}">
+                                    {% csrf_token %}
+                                    <div class="input-group" style="max-width: 400px;">
+                                        <input type="email" class="form-control" name="email" placeholder="Enter your email" required>
+                                        <button class="btn btn-light" type="submit">
+                                            <i class="bi bi-envelope"></i> Subscribe
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light mt-5">
+        {% include 'includes/footer.html' %}
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="btn btn-primary btn-floating position-fixed bottom-0 end-0 m-3 d-none" style="z-index: 1000;">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-banner" class="cookie-banner position-fixed bottom-0 start-0 w-100 bg-dark text-white p-3 d-none" style="z-index: 1050;">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-9">
+                    <p class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.
+                        <a href="{% url 'core:privacy_policy' %}" class="text-white text-decoration-underline">Learn more</a>
+                    </p>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button id="accept-cookies" class="btn btn-sm btn-primary me-2">Accept</button>
+                    <button id="decline-cookies" class="btn btn-sm btn-outline-light">Decline</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (for Django and some plugins) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/dark-mode.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+
+    <!-- Initialize components -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Initialize popovers
+            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+
+            // Back to top button
+            const backToTopBtn = document.getElementById('back-to-top');
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopBtn.classList.remove('d-none');
+                } else {
+                    backToTopBtn.classList.add('d-none');
+                }
+            });
+
+            backToTopBtn.addEventListener('click', function() {
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            });
+
+            // Cookie consent
+            const cookieBanner = document.getElementById('cookie-banner');
+            const acceptCookies = document.getElementById('accept-cookies');
+            const declineCookies = document.getElementById('decline-cookies');
+
+            // Check if user has already made a choice
+            if (!localStorage.getItem('cookieConsent')) {
+                cookieBanner.classList.remove('d-none');
+            }
+
+            acceptCookies.addEventListener('click', function() {
+                localStorage.setItem('cookieConsent', 'accepted');
+                cookieBanner.classList.add('d-none');
+            });
+
+            declineCookies.addEventListener('click', function() {
+                localStorage.setItem('cookieConsent', 'declined');
+                cookieBanner.classList.add('d-none');
+            });
+        });
+
+        // Global loading function
+        function showLoading() {
+            document.getElementById('loading-spinner').classList.remove('d-none');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-spinner').classList.add('d-none');
+        }
+
+        // CSRF token for AJAX requests
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Set CSRF token for all AJAX requests
+        const csrftoken = getCookie('csrftoken');
+        if (csrftoken) {
+            $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+        }
+    </script>
+
+    <!-- Google Analytics or other tracking -->
+    {% block analytics %}
+        {% comment %}
+        <!-- Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'GA_MEASUREMENT_ID');
+        </script>
+        {% endcomment %}
+    {% endblock %}
+</body>
+</html>
+

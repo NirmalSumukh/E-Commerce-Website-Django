@@ -1,0 +1,29 @@
+{% load i18n %}
+{% load currency_filters %}
+
+<style>
+.sidebar-totals .total-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+.sidebar-totals .tax-note {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 0;
+}
+</style>
+
+<div class="sidebar-totals">
+    <div class="total-amount">
+        {% if basket.is_tax_known %}
+            {{ basket.total_incl_tax|currency:basket.currency }}
+        {% else %}
+            {{ basket.total_excl_tax|currency:basket.currency }}
+        {% endif %}
+    </div>
+    <div class="tax-note">
+        {% trans "Inclusive of all taxes" %}
+    </div>
+</div>

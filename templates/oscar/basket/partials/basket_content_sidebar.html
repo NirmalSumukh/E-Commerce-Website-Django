@@ -1,0 +1,370 @@
+{% load i18n %}
+{% load image_tags %}
+{% load currency_filters %}
+{% load purchase_info_tags %}
+{% load widget_tweaks %}
+
+<style>
+.sidebar-cart-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.item-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 15px;
+}
+
+.item-details {
+    flex: 1;
+}
+
+.item-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.item-variant {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.item-price {
+    font-weight: 700;
+    color: #333;
+}
+
+.item-price .original-price {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.qty-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ddd;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.qty-input {
+    width: 40px;
+    text-align: center;
+    border: none;
+    font-weight: 600;
+}
+
+.remove-item {
+    color: #dc3545;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.loyalty-section {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+}
+
+.loyalty-text {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.sign-in-btn {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.coupon-section {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.coupon-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+}
+
+.checkout-section {
+    padding: 20px;
+    background: white;
+}
+
+.total-amount {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.tax-note {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.pay-now-btn {
+    width: 100%;
+    background: #333;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+</style>
+
+{% if basket_warnings %}
+    <div class="alert alert-warning">
+        {% for warning in basket_warnings %}
+            {{ warning }}
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if not basket.is_empty %}
+    <!-- Loyalty Section -->
+    {% if not user.is_authenticated %}
+    <div class="loyalty-section">
+        <div class="loyalty-text">
+            {% trans "Sign in to Unlock boAt loyalty points/Gift card balance" %}
+        </div>
+        <button class="sign-in-btn">{% trans "Sign In Now" %}</button>
+    </div>
+    {% endif %}
+
+    <!-- Cart Items -->
+    <div class="cart-items">
+        {% for line in basket.all_lines %}
+            <div class="sidebar-cart-item" data-line-id="{{ line.id }}">
+                {% if line.product.primary_image %}
+                    <img src="{{ line.product.primary_image.original.url }}" 
+                         alt="{{ line.product.title }}" class="item-image">
+                {% else %}
+                    <div class="item-image bg-light d-flex align-items-center justify-content-center">
+                        <i class="fas fa-image text-muted"></i>
+                    </div>
+                {% endif %}
+                
+                <div class="item-details">
+                    <div class="item-title">{{ line.product.title }}</div>
+                    {% if line.product.attribute_summary %}
+                        <div class="item-variant">{{ line.product.attribute_summary }}</div>
+                    {% endif %}
+                    
+                    <div class="item-price">
+                        {% purchase_info_for_line request line as session %}
+                        {{ session.price.incl_tax|currency:basket.currency }}
+                        {% if session.price.has_discount %}
+                            <span class="original-price">
+                                {{ session.price.retail|currency:basket.currency }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="quantity-controls">
+                        <button class="qty-btn" onclick="updateQuantity({{ line.id }}, {{ line.quantity|add:'-1' }})">-</button>
+                        <input type="text" value="{{ line.quantity }}" class="qty-input" readonly>
+                        <button class="qty-btn" onclick="updateQuantity({{ line.id }}, {{ line.quantity|add:'1' }})">+</button>
+                        <i class="fas fa-trash remove-item" onclick="removeLine({{ line.id }})"></i>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Coupon Section -->
+    <div class="coupon-section">
+        <div class="coupon-toggle" onclick="toggleCoupon()">
+            <span><i class="fas fa-tag"></i> {% trans "Apply Coupon" %}</span>
+            <i class="fas fa-chevron-right"></i>
+        </div>
+        <div id="coupon-form" style="display: none; margin-top: 10px;">
+            {% include 'oscar/basket/partials/voucher_form_sidebar.html' %}
+        </div>
+    </div>
+
+    <!-- Checkout Section -->
+    <div class="checkout-section">
+        {% include 'oscar/basket/partials/basket_totals_sidebar.html' %}
+        
+        <button class="pay-now-btn" onclick="proceedToCheckout()">
+            {% trans "Pay Now" %}
+        </button>
+    </div>
+
+{% else %}
+    <div class="empty-cart text-center py-5">
+        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+        <p>{% trans "Your basket is empty." %}</p>
+        <button class="btn btn-primary" onclick="closeCartSidebar()">
+            {% trans "Continue shopping" %}
+        </button>
+    </div>
+{% endif %}
+
+<script>
+/**
+ * Updates the quantity of a line item in the basket via an AJAX request.
+ * This function constructs a POST body that mimics a Django formset submission,
+ * which is what Oscar's BasketView expects.
+ *
+ * @param {number} lineId The ID of the basket line to update.
+ * @param {number} newQuantity The new quantity for the line.
+ */
+function updateQuantity(lineId, newQuantity) {
+    // A quantity of 0 means the item will be removed from the basket.
+    if (newQuantity < 0) {
+        return; // Don't allow negative quantities.
+    }
+    
+    // Use URLSearchParams to build a valid x-www-form-urlencoded request body.
+    const body = new URLSearchParams();
+    body.append('action', 'update');
+    
+    // Add Django formset management data. We are telling the backend
+    // that we are submitting a formset that contains exactly one form.
+    body.append('form-TOTAL_FORMS', '1');
+    body.append('form-INITIAL_FORMS', '1');
+    
+    // Add the data for the single line we are updating.
+    // We use the prefix 'form-0-' because it's the first (and only) form in our submission.
+    // The 'form-0-id' field is crucial; it tells the formset which existing line to modify.
+    body.append('form-0-id', lineId);
+    body.append('form-0-quantity', newQuantity);
+
+    fetch('{% url "basket:summary" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: body.toString()
+    })
+    .then(response => {
+        if (response.ok) {
+            // loadCartContent() is defined in your navbar.html and will
+            // refresh the content of the cart sidebar.
+            loadCartContent();
+        } else {
+            // You could add user-facing error handling here.
+            console.error('Failed to update basket quantity.');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending update request:', error);
+    });
+}
+
+/**
+ * Removes a line item from the basket by setting its quantity to 0.
+ *
+ * @param {number} lineId The ID of the basket line to remove.
+ */
+function removeLine(lineId) {
+    // Oscar's basket formset handles removal when a line's quantity is set to 0.
+    updateQuantity(lineId, 0);
+}
+
+function toggleCoupon() {
+    const form = document.getElementById('coupon-form');
+    const icon = document.querySelector('.coupon-toggle i:last-child');
+    
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        icon.style.transform = 'rotate(90deg)';
+    } else {
+        form.style.display = 'none';
+        icon.style.transform = 'rotate(0deg)';
+    }
+}
+
+function proceedToCheckout() {
+    window.location.href = '{% url "checkout:index" %}';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all "add to basket" forms. Oscar typically gives them this class.
+    // If your form has a different selector, change it here.
+    const addToBasketForms = document.querySelectorAll('form.add-to-basket');
+
+    addToBasketForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Prevent the default full-page submission
+            e.preventDefault();
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.innerHTML = 'Adding...';
+            submitButton.disabled = true;
+
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    // This header tells Oscar to return a JSON response instead of redirecting
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Restore the button's original state
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+
+                if (data.status === 'success') {
+                    // Use the function from navbar.html to refresh the cart display
+                    if (typeof loadCartContent === 'function') {
+                        loadCartContent();
+                    }
+                    // Open the sidebar to show the user the item was added
+                    if (typeof openCartSidebar === 'function') {
+                        openCartSidebar();
+                    }
+                } else {
+                    // Handle errors, e.g., show an error message from the server
+                    alert(data.messages || 'Could not add item to basket.');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding to basket:', error);
+                // Restore button and show a generic error
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+                alert('An error occurred. Please try again.');
+            });
+        });
+    });
+});
+
+</script>
